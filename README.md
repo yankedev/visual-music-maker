@@ -1,3 +1,6 @@
+## Installation guide
+https://medium.com/@harunijaz/a-step-by-step-guide-to-installing-cuda-with-pytorch-in-conda-on-windows-verifying-via-console-9ba4cd5ccbef
+
 ## pytorch-openpose
 
 pytorch implementation of [openpose](https://github.com/CMU-Perceptual-Computing-Lab/openpose) including **Body and Hand Pose Estimation**, and the pytorch model is directly converted from [openpose](https://github.com/CMU-Perceptual-Computing-Lab/openpose) caffemodel by [caffemodel2pytorch](https://github.com/vadimkantorov/caffemodel2pytorch). You could implement face keypoint detection in the same way if you are interested in. Pay attention to that the face keypoint detector was trained using the procedure described in [Simon et al. 2017] for hands.
@@ -22,10 +25,12 @@ Don't be mean to star this repo if it helps your research.
 
 Create a python 3.7 environement, eg:
 
-    conda create -n pytorch-openpose python=3.7
-    conda activate pytorch-openpose
+conda create -n pytorch-test python=3.11
+conda activate pytorch-test
 
 Install pytorch by following the quick start guide here (use pip) https://download.pytorch.org/whl/torch_stable.html
+
+conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
 
 Install other requirements with pip
 
