@@ -25,7 +25,7 @@ Don't be mean to star this repo if it helps your research.
 
 #### Install Requriements
 
-Create a python 3.7 environement, eg:
+Create a python environement, eg:
 
     conda create -n pytorch-test python=3.11
     conda activate pytorch-test
