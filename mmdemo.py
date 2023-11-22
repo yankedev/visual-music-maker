@@ -16,8 +16,8 @@ class PoseEstimation:
 
         self.cap = cv2.VideoCapture(0)
 
-        #self.delay = int(1000 / fps)
-        self.delay = int(1)
+        self.delay = int(1000 / fps)
+
         self.window = tk.Tk()
         self.window.title("Pose Estimation")
         self.image_label = tk.Label(self.window)
