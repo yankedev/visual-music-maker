@@ -6,6 +6,9 @@ from mmpose.registry import VISUALIZERS
 from mmpose.structures import merge_data_samples
 import time
 
+from player import MusicPlayer, Playlist
+import pygame
+
 
 class PoseEstimation:
     def __init__(self, config, checkpoint, device="cpu", fps=30):
@@ -23,13 +26,21 @@ class PoseEstimation:
         self.image_label = tk.Label(self.window)
         self.image_label.pack()
 
+        playlist = Playlist.from_folder("./music")
+        if playlist and not playlist.is_empty():
+            self.p1 = MusicPlayer(playlist)
+            self.p1.set_index(2)
+            self.p1.set_volume(1)
+            self.p1.play()
+
         self.update_image()
 
     def update_image(self):
         ret, frame = self.cap.read()
         if ret:
             result = self.estimate_pose(frame)
-
+            writsPos = self.extract_wrist_position()
+            self.set_volume(writsPos)
             image = Image.fromarray(result)
             photo = ImageTk.PhotoImage(image)
 
@@ -37,6 +48,20 @@ class PoseEstimation:
             self.image_label.image = photo
 
         self.window.after(self.delay, self.update_image)
+
+    def set_volume(self, wrists):
+        rightWristY = wrists[0][1]
+        print(f"Right Wrist Y position: {rightWristY} ")
+        leftWristY = wrists[1][1]
+        p1Volume = int((500-rightWristY)/5)/100
+        print(f"p1 volume: {p1Volume} ")
+        self.p1.set_volume(p1Volume)
+
+    def extract_wrist_position(self):
+        print(f"Wrist position: {self.points[10][0]} -  {self.points[10][1]} ")
+        right_wrist = int(self.points[10][0]), int(self.points[10][1])
+        left_wrist = int(self.points[9][0]), int(self.points[9][1])
+        return [right_wrist, left_wrist]
 
     def estimate_pose(self, frame):
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -52,6 +77,7 @@ class PoseEstimation:
         print(f"Elapsed time: {elapsed_time} seconds")
         pred_instances = result.pred_instances
         keypoints = pred_instances.keypoints[0]  # Assuming single person in the frame
+        self.points = keypoints
         keypoint_scores = pred_instances.keypoint_scores[0]  # Key point scores
 
         print("KEYPOINTS: " + str(keypoints))
@@ -98,6 +124,7 @@ class PoseEstimation:
 
     def __del__(self):
         self.cap.release()
+        self.p1.stop()
 
 
 if __name__ == "__main__":

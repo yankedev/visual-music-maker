@@ -42,6 +42,8 @@ Install mmpose
     mim install "mmdet>=3.1.0"
     mim install "mmpose>=1.1.0"
 
+    mim download mmpose --config td-hm_hrnet-w48_8xb32-210e_coco-256x192  --dest .
+
 Install other requirements with pip
 
     pip install -r requirements.txt
