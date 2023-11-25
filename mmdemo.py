@@ -8,10 +8,11 @@ import time
 
 from player import MusicPlayer, Playlist
 import pygame
+import threading
 
 
 class PoseEstimation:
-    def __init__(self, config, checkpoint, device="cpu", fps=30):
+    def __init__(self, config, checkpoint, device="cuda:0", fps=30):
         self.model = init_model(config, checkpoint, device=device)
 
         self.visualizer = VISUALIZERS.build(self.model.cfg.visualizer)
@@ -38,10 +39,10 @@ class PoseEstimation:
     def update_image(self):
         ret, frame = self.cap.read()
         if ret:
-            result = self.estimate_pose(frame)
-            writsPos = self.extract_wrist_position()
+            results = self.estimate_pose(frame)
+            writsPos = self.extract_wrist_position(results[1])
             self.set_volume(writsPos)
-            image = Image.fromarray(result)
+            image = Image.fromarray(results[0])
             photo = ImageTk.PhotoImage(image)
 
             self.image_label.configure(image=photo)
@@ -57,10 +58,10 @@ class PoseEstimation:
         print(f"p1 volume: {p1Volume} ")
         self.p1.set_volume(p1Volume)
 
-    def extract_wrist_position(self):
-        print(f"Wrist position: {self.points[10][0]} -  {self.points[10][1]} ")
-        right_wrist = int(self.points[10][0]), int(self.points[10][1])
-        left_wrist = int(self.points[9][0]), int(self.points[9][1])
+    def extract_wrist_position(self, points):
+        print(f"Wrist position: {points[10][0]} -  {points[10][1]} ")
+        right_wrist = int(points[10][0]), int(points[10][1])
+        left_wrist = int(points[9][0]), int(points[9][1])
         return [right_wrist, left_wrist]
 
     def estimate_pose(self, frame):
@@ -77,7 +78,6 @@ class PoseEstimation:
         print(f"Elapsed time: {elapsed_time} seconds")
         pred_instances = result.pred_instances
         keypoints = pred_instances.keypoints[0]  # Assuming single person in the frame
-        self.points = keypoints
         keypoint_scores = pred_instances.keypoint_scores[0]  # Key point scores
 
         print("KEYPOINTS: " + str(keypoints))
@@ -117,9 +117,15 @@ class PoseEstimation:
                     2,
                 )
         # visualized_image_bgr = cv2.cvtColor(rgb_frame, cv2.COLOR_RGB2BGR)
-        return rgb_frame
+        return [ rgb_frame, keypoints, keypoint_scores]
 
     def run(self):
+        playlist = Playlist.from_folder("./music")
+        if playlist and not playlist.is_empty():
+            self.p1 = MusicPlayer(playlist)
+            self.p1.set_index(5)
+            self.p1.set_volume(1)
+            self.p1.play()
         self.window.mainloop()
 
     def __del__(self):
