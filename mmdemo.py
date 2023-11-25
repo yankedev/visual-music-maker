@@ -10,6 +10,15 @@ from player import MusicPlayer, Playlist
 import pygame
 import threading
 
+def play(musicplayer, stop_event):
+    musicplayer.set_index(3)
+    musicplayer.set_volume(1)
+    musicplayer.play()
+    while not stop_event.is_set():
+        time.sleep(1)
+    musicplayer.stop()
+    print(f"Musicplayer stops ")
+
 
 class PoseEstimation:
     def __init__(self, config, checkpoint, device="cuda:0", fps=30):
@@ -26,14 +35,9 @@ class PoseEstimation:
         self.window.title("Pose Estimation")
         self.image_label = tk.Label(self.window)
         self.image_label.pack()
-
         playlist = Playlist.from_folder("./music")
         if playlist and not playlist.is_empty():
             self.p1 = MusicPlayer(playlist)
-            self.p1.set_index(2)
-            self.p1.set_volume(1)
-            self.p1.play()
-
         self.update_image()
 
     def update_image(self):
@@ -80,7 +84,7 @@ class PoseEstimation:
         keypoints = pred_instances.keypoints[0]  # Assuming single person in the frame
         keypoint_scores = pred_instances.keypoint_scores[0]  # Key point scores
 
-        print("KEYPOINTS: " + str(keypoints))
+        #print("KEYPOINTS: " + str(keypoints))
         #print("SCORE: " + str(keypoint_scores))
         # Skeleton connections for COCO keypoints
         skeleton = [
@@ -120,13 +124,23 @@ class PoseEstimation:
         return [ rgb_frame, keypoints, keypoint_scores]
 
     def run(self):
-        playlist = Playlist.from_folder("./music")
-        if playlist and not playlist.is_empty():
-            self.p1 = MusicPlayer(playlist)
-            self.p1.set_index(5)
-            self.p1.set_volume(1)
-            self.p1.play()
+        stop_event = threading.Event() # used to signal termination to the threads
+
+        print(f"Starting musicplayer thread...")   
+        music_thread = threading.Thread(target=play, args=(self.p1, stop_event))
+        music_thread.start()
+        print(f"Done musicplayer.")
+
+        print(f"Starting mainloop on main thread...")
         self.window.mainloop()
+        print(f"Done. mainloop")
+
+        try:
+            while True:
+                time.sleep(10)
+        except (KeyboardInterrupt, SystemExit):
+            # stop the music. 
+            stop_event.set()
 
     def __del__(self):
         self.cap.release()
