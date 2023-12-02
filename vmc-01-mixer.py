@@ -10,14 +10,18 @@ from player import MusicPlayer, Playlist
 import pygame
 import threading
 
-def play(musicplayer, stop_event):
-    musicplayer.set_index(3)
-    musicplayer.set_volume(1)
-    musicplayer.play()
+def play(mp1, mp2, stop_event):
+    mp1.set_index(2)
+    mp1.set_volume(1)
+    mp1.play()
+    mp2.set_index(1)
+    mp2.set_volume(1)
+    mp2.play()
     while not stop_event.is_set():
         time.sleep(1)
-    musicplayer.stop()
-    print(f"Musicplayer stops ")
+    mp1.stop()
+    mp2.stop()
+    print(f"Musicplayers stopped ")
 
 
 class PoseEstimation:
@@ -38,6 +42,7 @@ class PoseEstimation:
         playlist = Playlist.from_folder("./music")
         if playlist and not playlist.is_empty():
             self.p1 = MusicPlayer(playlist)
+            self.p2 = MusicPlayer(playlist)
         self.update_image()
 
     def update_image(self):
@@ -56,14 +61,20 @@ class PoseEstimation:
 
     def set_volume(self, wrists):
         rightWristY = wrists[0][1]
-        print(f"Right Wrist Y position: {rightWristY} ")
         leftWristY = wrists[1][1]
-        p1Volume = int((500-rightWristY)/5)/100
-        print(f"p1 volume: {p1Volume} ")
+        p1Volume = 0 
+        p2Volume = 0
+        if rightWristY < 400 :
+            p1Volume = int((500-rightWristY)/5)/100
+        if leftWristY < 400 :
+            p2Volume = int((500-leftWristY)/5)/100
+        print(f"[Right Y: {rightWristY}] p1 volume: {p1Volume} ")
+        print(f"[Left Y: {leftWristY}] p2 volume: {p2Volume} ")
         self.p1.set_volume(p1Volume)
+        self.p2.set_volume(p2Volume)
+        
 
     def extract_wrist_position(self, points):
-        print(f"Wrist position: {points[10][0]} -  {points[10][1]} ")
         right_wrist = int(points[10][0]), int(points[10][1])
         left_wrist = int(points[9][0]), int(points[9][1])
         return [right_wrist, left_wrist]
@@ -127,7 +138,7 @@ class PoseEstimation:
         stop_event = threading.Event() # used to signal termination to the threads
 
         print(f"Starting musicplayer thread...")   
-        music_thread = threading.Thread(target=play, args=(self.p1, stop_event))
+        music_thread = threading.Thread(target=play, args=(self.p1, self.p2, stop_event))
         music_thread.start()
         print(f"Done musicplayer.")
 
@@ -144,7 +155,6 @@ class PoseEstimation:
 
     def __del__(self):
         self.cap.release()
-        self.p1.stop()
 
 
 if __name__ == "__main__":
